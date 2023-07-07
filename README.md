@@ -1,0 +1,7 @@
+# IncrementalPlatformApi
+
+## Package
+```
+./gradlew shadowJar
+```
+
