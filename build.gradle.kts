@@ -51,6 +51,8 @@ tasks {
 val kotlinVersion: String by project
 val http4kVersion: String by project
 val junitVersion: String by project
+val exposedVersion: String by project
+val postgresVersion: String by project
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("org.http4k:http4k-client-okhttp:$http4kVersion")
@@ -64,6 +66,10 @@ dependencies {
     implementation("org.http4k:http4k-server-undertow:$http4kVersion")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     implementation("com.expediagroup:graphql-kotlin-schema-generator:6.5.3")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.postgresql:postgresql:$postgresVersion")
     testImplementation("org.http4k:http4k-testing-approval:$http4kVersion")
     testImplementation("org.http4k:http4k-testing-hamkrest:$http4kVersion")
     testImplementation("org.http4k:http4k-testing-kotest:$http4kVersion")
