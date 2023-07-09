@@ -1,16 +1,19 @@
 package com.incremental.api.partner
 
 import com.incremental.api.database.TransactionManager
+import com.incremental.api.search.SearchPredicateFactory
+import org.jetbrains.exposed.sql.Op
 
 interface ListPartnersHandler {
-    operator fun invoke(limit: Int?, offset: Long?): Collection<Partner>
+    operator fun invoke(search: Op<Boolean>, limit: Int?, offset: Long?): Collection<Partner>
 }
 
 class ListPartnersHandlerImpl(
-    private val dbConnection: TransactionManager<PartnerRepository>
+    private val dbConnection: TransactionManager<PartnerRepository>,
 ) : ListPartnersHandler {
-    override fun invoke(limit: Int?, offset: Long?) =
+    override fun invoke(search: Op<Boolean>, limit: Int?, offset: Long?) =
         dbConnection.tx {
-            search(predicate = null, limit = limit, offset = offset)
+            search(predicate = search, limit = limit, offset = offset)
         }
 }
+

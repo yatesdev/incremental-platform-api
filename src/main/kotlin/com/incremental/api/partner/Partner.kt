@@ -4,10 +4,9 @@ import com.incremental.api.database.TransactionManager
 import com.incremental.api.database.types.offsetDateTime
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 object Partners : UUIDTable() {
     val name: Column<String> = text("name")
@@ -36,17 +35,21 @@ data class Partner(
     val category: PartnerCategory
 )
 
+
 interface PartnerRepository {
     fun findById(id: UUID): Partner?
-    fun search(predicate: Any?, limit: Int?, offset: Long?): Collection<Partner>
+    fun search(predicate: Op<Boolean>?, limit: Int?, offset: Long?): Collection<Partner>
 }
 
 class PartnerRepositoryImpl : PartnerRepository {
     override fun findById(id: UUID): Partner? =
         Partners.select { Partners.id eq id }.singleOrNull()?.toPartner()
 
-    override fun search(predicate: Any?, limit: Int?, offset: Long?): Collection<Partner> =
+    override fun search(predicate: Op<Boolean>?, limit: Int?, offset: Long?): Collection<Partner> =
         Partners.selectAll().apply {
+            predicate?.let {
+                adjustWhere { predicate }
+            }
             limit?.let {
                 this.limit(limit, offset ?: 0L)
             }
@@ -59,6 +62,7 @@ class PartnerRepositoryTransactionManager(
 ) : TransactionManager<PartnerRepository> {
     override fun <T> tx(block: PartnerRepository.() -> T) =
         transaction(database) {
+            addLogger(StdOutSqlLogger)
             block(repository)
         }
 }
@@ -71,28 +75,3 @@ fun ResultRow.toPartner() = Partner(
     updatedAt = this[Partners.updatedAt],
     category = this[Partners.category]
 )
-
-//val query = StarWarsFilms.selectAll()
-//directorName?.let {
-//    query.andWhere { StarWarsFilms.director eq it }
-//}
-//sequelId?.let {
-//    query.andWhere { StarWarsFilms.sequelId eq it }
-//}
-//
-//actorName?.let {
-//    query.adjustColumnSet { innerJoin(Actors, {StarWarsFilms.sequelId}, {Actors.sequelId}) }
-//        .adjustSlice { slice(fields + Actors.columns) }
-//        .andWhere { Actors.name eq actorName }
-//}
-
-//@JsonIgnoreProperties("table", "column")
-//class Partner(id: EntityID<UUID>) : UUIDEntity(id) {
-//    companion object : UUIDEntityClass<Partner>(Partners)
-//    val name by Partners.name
-//    val createdAt by Partners.createdAt
-//    val updatedAt by Partners.updatedAt
-//    val deletedAt by Partners.deletedAt
-//    val keyId by Partners.keyId
-//    val category by Partners.category
-//}
