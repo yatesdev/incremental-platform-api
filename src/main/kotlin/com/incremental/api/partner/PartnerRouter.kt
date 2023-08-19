@@ -28,11 +28,19 @@ class PartnerRouter(
         val limit = limitLens(req)
 
         val search = searchPredicateFactory.build(listOf<SearchOperator<Partners>>(
-            FilteringSearchOperator(
-                member = "name",
-                operator = SearchFilterOperator.CONTAINS,
-                values = listOf("Amazon")
-            )
+            OrLogicalSearchOperator(or = listOf(
+                FilteringSearchOperator(
+                    member = "name",
+                    operator = SearchFilterOperator.CONTAINS,
+                    values = listOf("Amazon")
+                ),
+                FilteringSearchOperator(
+                    member = "category",
+                    operator = SearchFilterOperator.IN,
+                    values = listOf("RETAIL")
+                )
+            ))
+
         ))
 
         val result = listPartners(search, limit, offset)

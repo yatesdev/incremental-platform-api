@@ -1,6 +1,7 @@
 package com.incremental.api
 
 import com.incremental.api.partner.ListPartnersHandlerImpl
+import com.incremental.api.partner.PartnerCategory
 import com.incremental.api.partner.PartnerRepositoryImpl
 import com.incremental.api.partner.PartnerRepositoryTransactionManager
 import com.incremental.api.partner.PartnerRouter
@@ -25,10 +26,11 @@ fun startApp(): Http4kServer {
         password = "tw_platform",
     )
 
-    val stringExpressionBuilder =  StringExpressionBuilder()
+//    val stringExpressionBuilder =  StringExpressionBuilder()
+//    val partnerCategoryExpressionBuilder = PartnerCategory.PartnerCategoryExpressionBuilder
 
     val searchFilterPredicateBuilderFactory = SearchFilterPredicateBuilderFactory(
-        setOf(stringExpressionBuilder)
+        setOf(StringExpressionBuilder, PartnerCategory.PartnerCategoryExpressionBuilder)
     )
 
     val searchPredicateFactory = SearchPredicateFactory(searchFilterPredicateBuilderFactory)

@@ -1,6 +1,8 @@
 package com.incremental.api.search
 
+import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.*
+import java.util.UUID
 import kotlin.reflect.*
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
@@ -13,14 +15,14 @@ abstract class SearchFilterPredicateBuilder(
     abstract fun build(filter: FilteringSearchOperator<*>, entity: KClass<*>): Op<Boolean>
 }
 
-private inline fun <reified T : Any> Table.findColumn(name: String): Column<T>? =
+inline fun <reified T : Any> Table.findColumn(name: String): Column<T>? =
     this.columns.firstOrNull { it.name == name } as Column<T>?
 
-class StringExpressionBuilder : SearchFilterPredicateBuilder(String::class) {
+object StringExpressionBuilder : SearchFilterPredicateBuilder(String::class) {
     private fun exposedOrmStrategy(filter: FilteringSearchOperator<*>, entity: Table): Op<Boolean> =
         with(filter) {
-            val columns = entity.columns
-            println(columns)
+//            val columns = entity.columns
+//            println(columns)
             val path = entity.findColumn<String>(filter.member)
                 ?: throw IllegalArgumentException(
                     "Path of ${filter.member} does not exist on ${entity::class.simpleName}"
@@ -44,8 +46,8 @@ class StringExpressionBuilder : SearchFilterPredicateBuilder(String::class) {
         }
 
     override fun build(filter: FilteringSearchOperator<*>, entity: KClass<*>): Op<Boolean> =
-        when (entity) {
-            is Table -> exposedOrmStrategy(filter, entity)
+        when (entity.objectInstance) {
+            is Table -> exposedOrmStrategy(filter, entity.objectInstance as Table)
             else -> throw IllegalArgumentException("No strategy found for type '${entity::class.simpleName}'")
         }
 }
@@ -142,7 +144,8 @@ class SearchPredicateFactory(
             } else {
                 if (memberIterator.hasNext())
                     path = currentMember
-                currentPathClass = currentMember.returnType.jvmErasure
+//                currentPathClass = currentMember.returnType.jvmErasure
+                currentPathClass = currentMember.returnType.arguments.first().type!!.jvmErasure
             }
         }
 
@@ -158,7 +161,7 @@ class SearchPredicateFactory(
             ?: throw IllegalArgumentException("Entity variable must be defined for this class"),
         parent: LogicalSearchOperator<T>? = null
     ): Op<Boolean> {
-        var result = Op.build { Op.TRUE }
+        var result = Op.nullOp<Boolean>()
 
         fun appendFilteringSearchOperator(
             searchOperator: FilteringSearchOperator<*>,
@@ -185,46 +188,58 @@ class SearchPredicateFactory(
             searchOperator: LogicalSearchOperator<T>,
             entityPathClass: KClass<T>
         ) = when (searchOperator) {
-            is OrLogicalSearchOperator ->
+            is OrLogicalSearchOperator -> buildPredicateFromFilters(
+                searchOperator.or,
+                entityPathClass,
+                entityVariable,
+                searchOperator
+            )
+
+            is AndLogicalSearchOperator -> buildPredicateFromFilters(
+                searchOperator.and,
+                entityPathClass,
+                entityVariable,
+                searchOperator
+            )
         }
 
-            if (parent is OrLogicalSearchOperator) {
-            when (searchOperator) {
-                is OrLogicalSearchOperator -> searchOperator.or
-                is AndLogicalSearchOperator -> searchOperator.and
-            }.let {
-                result.or {
-                    buildPredicateFromFilters(
-                        it,
-                        entityPathClass,
-                        entityVariable
-                    )
-                }
-            }
-        } else {
-            when (searchOperator) {
-                is OrLogicalSearchOperator -> searchOperator.or
-                is AndLogicalSearchOperator -> searchOperator.and
-            }.let {
-                result.and {
-                    buildPredicateFromFilters(
-                        it,
-                        entityPathClass,
-                        entityVariable
-                    )
-                }
-            }
-        }
+//            if (parent is OrLogicalSearchOperator) {
+//            when (searchOperator) {
+//                is OrLogicalSearchOperator -> searchOperator.or
+//                is AndLogicalSearchOperator -> searchOperator.and
+//            }.let {
+//                result.or {
+//                    buildPredicateFromFilters(
+//                        it,
+//                        entityPathClass,
+//                        entityVariable
+//                    )
+//                }
+//            }
+//        } else {
+//            when (searchOperator) {
+//                is OrLogicalSearchOperator -> searchOperator.or
+//                is AndLogicalSearchOperator -> searchOperator.and
+//            }.let {
+//                result.and {
+//                    buildPredicateFromFilters(
+//                        it,
+//                        entityPathClass,
+//                        entityVariable
+//                    )
+//                }
+//            }
+//        }
 
         filters.forEach { searchOperator ->
-            when (searchOperator) {
-                is FilteringSearchOperator -> result = appendFilteringSearchOperator(
+            result = when (searchOperator) {
+                is FilteringSearchOperator -> appendFilteringSearchOperator(
                     searchOperator,
                     entityPathClass,
                     parent
                 )
 
-                is LogicalSearchOperator -> result = appendLogicalSearchOperator(searchOperator, entityPathClass)
+                is LogicalSearchOperator -> appendLogicalSearchOperator(searchOperator, entityPathClass)
             }
         }
         return result

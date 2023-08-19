@@ -2,12 +2,27 @@ package com.incremental.api.partner
 
 import com.incremental.api.database.TransactionManager
 import com.incremental.api.database.types.offsetDateTime
+import com.incremental.api.search.FilteringSearchOperator
+import com.incremental.api.search.SearchFilterOperator
+import com.incremental.api.search.SearchFilterPredicateBuilder
 import com.incremental.api.search.StringExpressionBuilder
+import com.incremental.api.search.findColumn
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.greaterEq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.reflect.KClass
 
 object Partners : UUIDTable() {
     val name: Column<String> = text("name")
@@ -24,15 +39,42 @@ val partnerSearchBuilder = mapOf(
     Partners::createdAt to StringExpressionBuilder::class
 )
 
-
-
 enum class PartnerCategory {
     RETAIL,
     MARKETING,
     OPERATIONS,
     FORECASTING,
     FINANCE,
-    DIGITAL_SHELF
+    DIGITAL_SHELF;
+
+    object PartnerCategoryExpressionBuilder : SearchFilterPredicateBuilder(PartnerCategory::class) {
+        private fun exposedOrmStrategy(filter: FilteringSearchOperator<*>, entity: Table): Op<Boolean> =
+            with(filter) {
+//            val columns = entity.columns
+//            println(columns)
+                val path = entity.findColumn<PartnerCategory>(filter.member)
+                    ?: throw IllegalArgumentException(
+                        "Path of ${filter.member} does not exist on ${entity::class.simpleName}"
+                    )
+
+                val partnerCategories = values.map { valueOf(it) }
+
+                return when (operator) {
+                    SearchFilterOperator.EQUALS -> Op.build { path eq partnerCategories.first() }
+                    SearchFilterOperator.NOT_EQUALS -> Op.build { path neq partnerCategories.first() }
+                    SearchFilterOperator.IN -> Op.build { path inList partnerCategories }
+                    else -> throw IllegalArgumentException(
+                        "${this::class.simpleName} does not support operation of '$operator'"
+                    )
+                }
+            }
+
+        override fun build(filter: FilteringSearchOperator<*>, entity: KClass<*>): Op<Boolean> =
+            when (entity.objectInstance) {
+                is Table -> exposedOrmStrategy(filter, entity.objectInstance as Table)
+                else -> throw IllegalArgumentException("No strategy found for type '${entity::class.simpleName}'")
+            }
+    }
 }
 
 data class Partner(
