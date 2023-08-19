@@ -32,11 +32,6 @@ class PartnerRouter(
                 member = "name",
                 operator = SearchFilterOperator.CONTAINS,
                 values = listOf("Amazon")
-            ),
-            FilteringSearchOperator(
-                member = "createdAt",
-                operator = SearchFilterOperator.GREATER_THAN,
-                values = listOf("2023-07-08T20:38:40.050852Z")
             )
         ))
 

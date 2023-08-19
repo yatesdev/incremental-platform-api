@@ -2,6 +2,7 @@ package com.incremental.api.partner
 
 import com.incremental.api.database.TransactionManager
 import com.incremental.api.database.types.offsetDateTime
+import com.incremental.api.search.StringExpressionBuilder
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -16,6 +17,14 @@ object Partners : UUIDTable() {
     val keyId: Column<String> = text("key_id")
     val category: Column<PartnerCategory> = enumerationByName("category", 25, PartnerCategory::class)
 }
+
+val partnerSearchBuilder = mapOf(
+    Partners::name to StringExpressionBuilder::class,
+    Partners::keyId to StringExpressionBuilder::class,
+    Partners::createdAt to StringExpressionBuilder::class
+)
+
+
 
 enum class PartnerCategory {
     RETAIL,
