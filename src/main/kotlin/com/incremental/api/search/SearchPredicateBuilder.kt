@@ -174,5 +174,5 @@ class SearchPredicateFactory(
         entityVariable: String = T::class.simpleName?.replaceFirstChar { it.lowercaseChar() }
             ?: throw IllegalArgumentException("Entity variable must be defined for this class")
 
-    ) = buildPredicateFromFilters(search.filters, T::class, entityVariable)
+    ) = if (search.filters.isNotEmpty())buildPredicateFromFilters(search.filters, T::class, entityVariable) else Op.TRUE
 }
