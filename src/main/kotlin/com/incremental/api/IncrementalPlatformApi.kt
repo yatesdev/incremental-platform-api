@@ -26,9 +26,6 @@ fun startApp(): Http4kServer {
         password = "tw_platform",
     )
 
-//    val stringExpressionBuilder =  StringExpressionBuilder()
-//    val partnerCategoryExpressionBuilder = PartnerCategory.PartnerCategoryExpressionBuilder
-
     val searchFilterPredicateBuilderFactory = SearchFilterPredicateBuilderFactory(
         setOf(StringExpressionBuilder, PartnerCategory.PartnerCategoryExpressionBuilder)
     )

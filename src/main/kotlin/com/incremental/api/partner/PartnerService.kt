@@ -4,7 +4,7 @@ import com.incremental.api.database.TransactionManager
 import com.incremental.api.search.SearchPredicateFactory
 import org.jetbrains.exposed.sql.Op
 
-interface ListPartnersHandler {
+fun interface ListPartnersHandler {
     operator fun invoke(search: Op<Boolean>, limit: Int?, offset: Long?): Collection<Partner>
 }
 

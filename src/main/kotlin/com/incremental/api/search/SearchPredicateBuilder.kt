@@ -1,8 +1,6 @@
 package com.incremental.api.search
 
-import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.*
-import java.util.UUID
 import kotlin.reflect.*
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
@@ -168,7 +166,7 @@ class SearchPredicateFactory(
     }
 
     inline fun <reified T : Any> build(
-        search: Collection<SearchOperator<T>> = listOf(),
+        search: Search<T>,
         /** Name of the static EntityPathBase defined for QueryDsl generated QType entities. (QType.qType)
          * The default value handles the common case.
          * Will need to be overridden if the entity name is a reserved word. Ex. group becomes group1 during generation
@@ -176,5 +174,5 @@ class SearchPredicateFactory(
         entityVariable: String = T::class.simpleName?.replaceFirstChar { it.lowercaseChar() }
             ?: throw IllegalArgumentException("Entity variable must be defined for this class")
 
-    ) = buildPredicateFromFilters(search, T::class, entityVariable)
+    ) = buildPredicateFromFilters(search.filters, T::class, entityVariable)
 }

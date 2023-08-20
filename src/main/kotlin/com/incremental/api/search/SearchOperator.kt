@@ -54,3 +54,7 @@ data class FilteringSearchOperator<T>(
     val operator: SearchFilterOperator,
     val values: List<String>
 ) : SearchOperator<T>
+
+data class Search<T>(
+    val filters: Collection<SearchOperator<T>> = emptyList()
+)

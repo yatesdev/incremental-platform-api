@@ -33,12 +33,6 @@ object Partners : UUIDTable() {
     val category: Column<PartnerCategory> = enumerationByName("category", 25, PartnerCategory::class)
 }
 
-val partnerSearchBuilder = mapOf(
-    Partners::name to StringExpressionBuilder::class,
-    Partners::keyId to StringExpressionBuilder::class,
-    Partners::createdAt to StringExpressionBuilder::class
-)
-
 enum class PartnerCategory {
     RETAIL,
     MARKETING,
@@ -50,8 +44,6 @@ enum class PartnerCategory {
     object PartnerCategoryExpressionBuilder : SearchFilterPredicateBuilder(PartnerCategory::class) {
         private fun exposedOrmStrategy(filter: FilteringSearchOperator<*>, entity: Table): Op<Boolean> =
             with(filter) {
-//            val columns = entity.columns
-//            println(columns)
                 val path = entity.findColumn<PartnerCategory>(filter.member)
                     ?: throw IllegalArgumentException(
                         "Path of ${filter.member} does not exist on ${entity::class.simpleName}"
