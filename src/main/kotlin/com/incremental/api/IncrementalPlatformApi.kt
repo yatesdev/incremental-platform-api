@@ -7,7 +7,6 @@ import com.incremental.api.partner.PartnerCategory
 import com.incremental.api.partner.PartnerRepositoryImpl
 import com.incremental.api.partner.PartnerRepositoryTransactionManager
 import com.incremental.api.partner.PartnerRouter
-import com.incremental.api.partner.ReadPartnerHandler
 import com.incremental.api.partner.ReadPartnerHandlerImpl
 import com.incremental.api.search.SearchFilterPredicateBuilderFactory
 import com.incremental.api.search.SearchPredicateFactory
