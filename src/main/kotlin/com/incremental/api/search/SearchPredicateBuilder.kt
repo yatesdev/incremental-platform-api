@@ -68,7 +68,7 @@ class SearchPredicateFactory(
         val memberIterator = filter.member.split(".").iterator()
         while (memberIterator.hasNext()) {
             val memberName = memberIterator.next()
-            println(currentPathClass.memberProperties)
+//            println(currentPathClass.memberProperties)
             val currentMember = currentPathClass.memberProperties.firstOrNull { it.name == memberName }
                 ?: throw IllegalArgumentException("No member '$memberName' found in ${currentPathClass.simpleName}")
 

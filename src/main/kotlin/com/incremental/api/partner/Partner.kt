@@ -2,10 +2,14 @@ package com.incremental.api.partner
 
 import com.incremental.api.database.TransactionManager
 import com.incremental.api.database.types.offsetDateTime
+import com.incremental.api.partner.PartnerEntity.Companion.referrersOn
 import com.incremental.api.search.FilteringSearchOperator
 import com.incremental.api.search.SearchFilterOperator
 import com.incremental.api.search.SearchFilterPredicateBuilder
 import com.incremental.api.search.findColumn
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -64,8 +68,35 @@ data class Partner(
     val name: String,
     val createdAt: OffsetDateTime,
     val updatedAt: OffsetDateTime,
-    val category: PartnerCategory
-)
+    val category: PartnerCategory,
+    val attributes: Collection<String> = emptyList()
+) {
+    companion object {
+        fun fromEntity(entity: PartnerEntity) = with(entity) {
+            Partner(
+                id = id.value,
+                keyId = keyId,
+                name = name,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                category = category,
+                attributes = attributes.map { it.attribute }
+            )
+        }
+    }
+}
+
+class PartnerEntity(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object : UUIDEntityClass<PartnerEntity>(Partners)
+    val keyId by Partners.keyId
+    val name by Partners.name
+    val createdAt by Partners.createdAt
+    val updatedAt by Partners.updatedAt
+    val category by Partners.category
+    val attributes by PartnerAttribute referrersOn PartnerAttributes.partner
+}
+
+fun PartnerEntity.toPartner() = Partner.fromEntity(this)
 
 
 interface PartnerRepository {
@@ -78,14 +109,19 @@ class PartnerRepositoryImpl : PartnerRepository {
         Partners.select { Partners.id eq id }.singleOrNull()?.toPartner()
 
     override fun search(predicate: Op<Boolean>?, limit: Int?, offset: Long?): Collection<Partner> =
-        Partners.selectAll().apply {
-            predicate?.let {
-                adjustWhere { predicate }
-            }
+        PartnerEntity.find { predicate ?: Op.nullOp() }.apply {
             limit?.let {
                 this.limit(limit, offset ?: 0L)
             }
         }.map { it.toPartner() }
+//        Partners.selectAll().apply {
+//            predicate?.let {
+//                adjustWhere { predicate }
+//            }
+//            limit?.let {
+//                this.limit(limit, offset ?: 0L)
+//            }
+//        }.map { it.toPartner() }
 }
 
 class PartnerRepositoryTransactionManager(
